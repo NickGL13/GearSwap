@@ -85,9 +85,9 @@ function job_post_precast(spell, spellMap, eventArgs)
 			-- Replace Moonshade Earring if we're at cap TP
 			if get_effective_player_tp(spell, WSset) > 3200 then
 				if wsacc:contains('Acc') and not buffactive['Sneak Attack'] and sets.AccMaxTP then
-					equip(sets.AccMaxTP)
+					equip(sets.AccMaxTP[spell.english] or sets.AccMaxTP)
 				elseif sets.MaxTP then
-					equip(sets.MaxTP)
+					equip(sets.MaxTP[spell.english] or sets.MaxTP)
 				else
 				end
 			end
@@ -95,8 +95,7 @@ function job_post_precast(spell, spellMap, eventArgs)
 	elseif spell.english == 'Lunge' or spell.english == 'Swipe' then
         if weather_rune_match() then
 			if item_available('Hachirin-no-Obi') then
-				sets.HachiObi = {waist="Hachirin-no-Obi"}
-				equip(sets.HachiObi)
+				equip({waist="Hachirin-no-Obi"})
 			end
         end
 		if spell.element and sets.element[spell.element] then
@@ -189,10 +188,7 @@ end
 -------------------------------------------------------------------------------------------------------------------
 
 function job_self_command(commandArgs, eventArgs)
-	if commandArgs[1]:lower() == 'runeelement' then
-		windower.chat.input('/ja "'..state.RuneElement.value..'" <me>')
-
-	elseif commandArgs[1]:lower() == 'subjobenmity' then
+	if commandArgs[1]:lower() == 'subjobenmity' then
 
 		if player.target.type ~= "MONSTER" then
 			add_to_chat(123,'Abort: You are not targeting a monster.')

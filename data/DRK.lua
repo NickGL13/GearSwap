@@ -114,24 +114,24 @@ function job_post_precast(spell, spellMap, eventArgs)
 					local AccMaxTPset = standardize_set(sets.AccMaxTP)
 
 					if (AccMaxTPset.ear1:startswith("Lugra Earring") or AccMaxTPset.ear2:startswith("Lugra Earring")) and not classes.DuskToDawn and sets.AccDayMaxTPWSEars then
-						equip(sets.AccDayMaxTPWSEars)
+						equip(sets.AccDayMaxTPWSEars[spell.english] or sets.AccDayMaxTPWSEars)
 					else
-						equip(sets.AccMaxTP)
+						equip(sets.AccMaxTP[spell.english] or sets.AccMaxTP)
 					end
 				elseif sets.MaxTP then
 					local MaxTPset = standardize_set(sets.MaxTP)
 					if (MaxTPset.ear1:startswith("Lugra Earring") or MaxTPset.ear2:startswith("Lugra Earring")) and not classes.DuskToDawn and sets.DayMaxTPWSEars then
-						equip(sets.DayMaxTPWSEars)
+						equip(sets.DayMaxTPWSEars[spell.english] or sets.DayMaxTPWSEars)
 					else
-						equip(sets.MaxTP)
+						equip(sets.MaxTP[spell.english] or sets.MaxTP)
 					end
 				else
 				end
 			else
 				if wsacc:contains('Acc') and not buffactive['Sneak Attack'] and (WSset.ear1:startswith("Lugra Earring") or WSset.ear2:startswith("Lugra Earring")) and not classes.DuskToDawn and sets.AccDayWSEars then
-					equip(sets.AccDayWSEars)
+					equip(sets.AccDayWSEars[spell.english] or sets.AccDayWSEars)
 				elseif (WSset.ear1:startswith("Lugra Earring") or WSset.ear2:startswith("Lugra Earring")) and not classes.DuskToDawn and sets.DayWSEars then
-					equip(sets.DayWSEars)
+					equip(sets.DayWSEars[spell.english] or sets.DayWSEars)
 				end
 			end
 			
@@ -160,13 +160,12 @@ function job_post_midcast(spell, spellMap, eventArgs)
 			equip(sets.element[spell.element])
 		end
 	elseif spell.skill == 'Dark Magic' then
-		if spell.english:contains('Absorb') and state.Buff['Dark Seal'] and sets.buff['Dark Seal'] then
-			equip(sets.buff['Dark Seal'])
-		end
-		if spell.english:contains('Absorb') and state.Buff['Nether Void'] and sets.buff['Nether Void'] then
+		if state.Buff['Nether Void'] and sets.buff['Nether Void'] and spell.english:startswith('Absorb') then
 			equip(sets.buff['Nether Void'])
 		end
-		
+		if state.Buff['Dark Seal'] and sets.buff['Dark Seal'] and (spell.english:startswith('Absorb') or spell.english == 'Dread Spikes' or spell.english == 'Drain II' or spell.english == 'Drain III') then
+			equip(sets.buff['Dark Seal'])
+		end
 		if (spell.english == 'Drain II' or spell.english == 'Drain III') and state.DrainSwapWeaponMode.value ~= 'Never' then
 			if sets.DrainWeapon and (state.DrainSwapWeaponMode.value == 'Always' or tonumber(state.DrainSwapWeaponMode.value) > player.tp) then
 				enable('main','sub','range','ammo')

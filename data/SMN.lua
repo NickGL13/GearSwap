@@ -177,8 +177,8 @@ function job_post_precast(spell, spellMap, eventArgs)
 		
 		if (WSset.ear1 == "Moonshade Earring" or WSset.ear2 == "Moonshade Earring") then
 			-- Replace Moonshade Earring if we're at cap TP
-			if spell.english == 'Myrkr' and get_effective_player_tp(spell, WSset) > 3200 and sets.MaxTPMyrkr then
-				equip(sets.MaxTPMyrkr)
+			if sets.MaxTP and get_effective_player_tp(spell, WSset) > 3200 then
+				equip(sets.MaxTP[spell.english] or sets.MaxTP)
 			end
 		end
 	end
@@ -218,6 +218,7 @@ function job_aftercast(spell, spellMap, eventArgs)
             state.MagicBurstMode:reset()
 			if state.DisplayMode.value then update_job_states()	end
 		elseif type(spell.type) == 'string' and spell.type:startswith('BloodPact') and state.DefenseMode.value == 'None' then
+			petWillAct = os.clock()
 			if ConduitLocked and ConduitLocked ~= spell.english then
 				ConduitLocked = nil
 				if state.Weapons.value == 'None' then

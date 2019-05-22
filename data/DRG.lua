@@ -59,9 +59,9 @@ function job_post_precast(spell, spellMap, eventArgs)
 			-- Replace Moonshade Earring if we're at cap TP
 			if get_effective_player_tp(spell, WSset) > 3200 then
 				if wsacc:contains('Acc') and not buffactive['Sneak Attack'] and sets.AccMaxTP then
-					equip(sets.AccMaxTP)
+					equip(sets.AccMaxTP[spell.english] or sets.AccMaxTP)
 				elseif sets.MaxTP then
-					equip(sets.MaxTP)
+					equip(sets.MaxTP[spell.english] or sets.MaxTP)
 				else
 				end
 			end
@@ -88,9 +88,11 @@ end
 function job_aftercast(spell, spellMap, eventArgs)
 	if pet.isvalid then
 		if (spell.action_type == 'Magic' and player.hpp < Breath_HPP) then
-			eventArgs.handled = true
+			petWillAct = os.clock()
 			equip(sets.HealingBreath)
+			eventArgs.handled = true
 		elseif (spell.english == 'Restoring Breath' or spell.english == 'Smiting Breath' or spell.english == 'Steady Wing') then
+			petWillAct = os.clock()
 			eventArgs.handled = true
 		end
 	end

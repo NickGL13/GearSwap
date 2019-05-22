@@ -27,7 +27,7 @@ function job_setup()
     magicPetModes = S{'Nuke','Heal','Magic'}
 
     -- Var to track the current pet mode.
-    state.PetMode = M{['description']='Pet Mode', 'None','Melee','Ranged','Tank','LightTank','Magic','Heal','Nuke'}
+    state.PetMode = M{['description']='Pet Mode', 'None','Melee','Ranged','HybridRanged','Tank','LightTank','Magic','Heal','Nuke'}
 
 	state.AutoPuppetMode = M(false, 'Auto Puppet Mode')
 	state.AutoRepairMode = M(true, 'Auto Repair Mode')
@@ -72,9 +72,9 @@ function job_post_precast(spell, spellMap, eventArgs)
 			-- Replace Moonshade Earring if we're at cap TP
 			if get_effective_player_tp(spell, WSset) > 3200 then
 				if wsacc:contains('Acc') and not buffactive['Sneak Attack'] and sets.AccMaxTP then
-					equip(sets.AccMaxTP)
+					equip(sets.AccMaxTP[spell.english] or sets.AccMaxTP)
 				elseif sets.MaxTP then
-					equip(sets.MaxTP)
+					equip(sets.MaxTP[spell.english] or sets.MaxTP)
 				else
 				end
 			end
@@ -146,6 +146,17 @@ end
 -- Set eventArgs.handled to true if we don't want the automatic display to be run.
 function display_current_job_state(eventArgs)
     display_pet_status()
+end
+
+-- Custom spell mapping.
+function job_get_spell_map(spell, default_spell_map)
+	if  default_spell_map == 'Cure' or default_spell_map == 'Curaga'  then
+		if world.weather_element == 'Light' then
+                return 'LightWeatherCure'
+		elseif world.day_element == 'Light' then
+                return 'LightDayCure'
+        end
+	end	
 end
 
 function job_customize_idle_set(idleSet)
@@ -230,7 +241,11 @@ end
 function get_pet_mode()
     if pet.isvalid then
 		if pet.frame == 'Sharpshot Frame' then
-			return 'Ranged'
+			if pet.head == 'Valoredge Head' or pet.head == 'Harlequin Head' then
+				return 'HybridRanged'
+			else
+				return 'Ranged'
+			end
 		elseif pet.frame == 'Valoredge Frame' then
 			if pet.head == 'Soulsoother Head' then
 				return 'Tank'
