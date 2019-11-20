@@ -20,9 +20,6 @@ function job_setup()
 	
 	state.Stance = M{['description']='Stance','Innin','Yonin','None'}
 
-	--List of which WS you plan to use TP bonus WS with.
-	moonshade_ws = S{'Blade: Hi', 'Blade: Ten'}
-	
 	autows = "Blade: Shun"
 	autofood = 'Soy Ramen'
 	
@@ -48,7 +45,7 @@ function job_pretarget(spell, spellMap, eventArgs)
     if spell.action_type == 'Ranged Attack' and (player.equipment.ammo == 'Togakushi Shuriken' or player.equipment.ammo == 'Happo Shuriken') then
 		cancel_spell()
 		add_to_chat(123,'Abort: Don\'t throw your good ammo!')
-    elseif spell.name == 'Sange' and (player.equipment.ammo == 'Togakushi Shuriken' or player.equipment.ammo == 'Happo Shuriken') then
+    elseif spell.english == 'Sange' and (player.equipment.ammo == 'Togakushi Shuriken' or player.equipment.ammo == 'Happo Shuriken') then
 		cancel_spell()
 		add_to_chat(123,'Abort: Don\'t throw your good ammo!')
     end
@@ -315,11 +312,11 @@ function check_stance()
 		
 		if state.Stance.value == 'Innin' and abil_recasts[147] < latency then
 			windower.chat.input('/ja "Innin" <me>')
-			tickdelay = framerate
+			tickdelay = os.clock() + 1.8
 			return true
 		elseif state.Stance.value == 'Yonin' and abil_recasts[146] < latency then
 			windower.chat.input('/ja "Yonin" <me>')
-			tickdelay = framerate
+			tickdelay = os.clock() + 1.8
 			return true
 		else
 			return false

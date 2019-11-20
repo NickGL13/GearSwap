@@ -17,9 +17,6 @@ function job_setup()
 	state.Stance = M{['description']='Stance','Hasso','Seigan','None'}
 
 	state.CurrentStep = M{['description']='Current Step', 'Box Step', 'Quickstep'}
-
-	--List of which WS you plan to use TP bonus WS with. (Atonement uses but doesn't need to switch out.)
-	moonshade_ws = S{'Savage Blade', 'Chant du Cygne'}
 	
 	state.AutoEmblem = M(true, 'Auto Emblem')
 	
@@ -64,7 +61,7 @@ end
 
 function job_precast(spell, spellMap, eventArgs)
 
-	if spell.name == 'Flash' then
+	if spell.english == 'Flash' then
 		local abil_recasts = windower.ffxi.get_ability_recasts()
 		local spell_recasts = windower.ffxi.get_spell_recasts()
 		if abil_recasts[80] < latency and not silent_check_amnesia() and spell_recasts[112] < spell_latency and state.AutoEmblem.value then
