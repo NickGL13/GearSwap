@@ -201,8 +201,10 @@ autogeo = 'Malaise'
 
 :Macro:		/console gs c toggle AutoWSMode
 SubCommand Examples to change options:
-//gs c autows Savage Blade
-//gs c autows tp 1250
+//gs c autows Namas Arrow
+//gs c autows Tachi: Shoha
+//gs c autows Resolution
+//gs c autows tp 2000
 Can change default options in the gearswap job_character_gear file with:
 autows = 'Savage Blade'
 autowstp = 1250
@@ -240,6 +242,8 @@ windower.send_command('bind ^h gs c useitem ring2 Warp Ring')
 
 As a Macro:
 /console gs c useitem ring2 Warp Ring
+
+/console gs c useitem ear1 Reraise earring
 
 [Control + Z] Capacity Mode
 Will automatically use capacity items and keep capacity cape on, for this to work it
