@@ -102,7 +102,7 @@ function job_post_precast(spell, spellMap, eventArgs)
 		if (WSset.ear1 == "Moonshade Earring" or WSset.ear2 == "Moonshade Earring") then
 			-- Replace Moonshade Earring if we're at cap TP
 			if get_effective_player_tp(spell, WSset) > 3200 then
-				if elemental_obi_weaponskills:contains(spell.english) then
+				if data.weaponskills.elemental:contains(spell.english) then
 					if wsacc:contains('Acc') and sets.MagicalAccMaxTP then
 						equip(sets.MagicalAccMaxTP[spell.english] or sets.MagicalAccMaxTP)
 					elseif sets.MagicalMaxTP then
@@ -161,7 +161,7 @@ function job_post_midcast(spell, spellMap, eventArgs)
             if classes.CustomRangedGroups:contains('AM') then
 				if sets.buff['Double Shot'][state.Weapons.value] then
 					if sets.buff['Double Shot'][state.Weapons.value][state.RangedMode.value] then
-						if sets.buff['Double Shot'][state.Weapons.value][state.RangedMode.value].AM
+						if sets.buff['Double Shot'][state.Weapons.value][state.RangedMode.value].AM then
 							equip(sets.buff['Double Shot'][state.Weapons.value][state.RangedMode.value].AM)
 						else
 							equip(sets.buff['Double Shot'][state.Weapons.value][state.RangedMode.value])
@@ -172,12 +172,12 @@ function job_post_midcast(spell, spellMap, eventArgs)
 						equip(sets.buff['Double Shot'][state.Weapons.value])
 					end
 				elseif sets.buff['Double Shot'][state.RangedMode.value] then
-					if sets.buff['Double Shot'][state.RangedMode.value].AM
+					if sets.buff['Double Shot'][state.RangedMode.value].AM then
 						equip(sets.buff['Double Shot'][state.RangedMode.value].AM)
 					else
 						equip(sets.buff['Double Shot'][state.RangedMode.value])
 					end
-				elseif sets.buff['Double Shot'].AM
+				elseif sets.buff['Double Shot'].AM then
 					equip(sets.buff['Double Shot'])
 				else
 					equip(sets.buff['Double Shot'])
@@ -226,7 +226,7 @@ end
 
 -- Called by the 'update' self-command.
 function job_update(cmdParams, eventArgs)
-    if cmdParams[1] == 'user' and not areas.Cities:contains(world.area) then
+    if cmdParams[1] == 'user' and not data.areas.cities:contains(world.area) then
         if not buffactive['Velocity Shot'] then
             send_command('@input /ja "Velocity Shot" <me>')
         end
