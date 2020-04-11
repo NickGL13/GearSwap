@@ -180,6 +180,8 @@ data.weaponskills.ranged = S{"Flaming Arrow","Piercing Arrow","Dulling Arrow","S
 
 data.weaponskills.elemental = S{'Wildfire','Leaden Salute','Sanguine Blade','Aeolian Edge','Cataclysm','Trueflight','Tachi: Jinpu','Flash Nova'}
 
+data.weaponskills.statue_ws = {['COR']='Leaden Salute',['RNG']='Trueflight',['RDM']='Sanguine Blade',['BLU']='Sanguine Blade'}
+
 -- Elements for skillchain names
 data.skillchains = {}
 data.skillchains.light = S{'Light','Fire','Wind','Lightning'}
@@ -317,6 +319,7 @@ data.abilities.black_to_white_stratagems = {['Parsimony']='Penury',['Alacrity']=
 data.jobs = {}
 
 data.jobs.mage_jobs = S{'WHM','BLM','SCH','RDM','BRD','SMN','GEO'}
+data.jobs.nuke_jobs = S{'BLM','SCH','RDM','GEO'}
 data.jobs.melee_jobs = S{'WAR','MNK','THF','PLD','DRK','SAM','NIN','BLU','DNC','RUN','COR','PUP','PLD','DRK','BST'}
 data.jobs.dual_wield_jobs = S{'THF','BLU','NIN','DNC'}
 
@@ -716,5 +719,16 @@ spell_stepdown = {
 item_stepdown = {
 	['Warp Ring'] = {'Treat Staff','main'},
 	['Treat Staff'] = {'Warp Cudgel','main'},
-	['Warp Cudgel'] = {'Instant Warp','item'}
+	['Warp Cudgel'] = {'Instant Warp','item'},
+	['Dusty Reraise'] = {'Instant Reraise','item'},
+	['Instant Reraise'] = {'Reraiser','item'},
+	['Reraiser'] = {'Hi-Reraiser','item'},
+	['Hi-Reraiser'] = {'Scapegoat','item'},
+	['Scapegoat'] = {'Super Reraiser','item'},
+	['Super Reraiser'] = {'Revive Feather','item'},
+	['Revive Feather'] = {'Rebirth Feather','item'},
+	['Rebirth Feather'] = {'Reraise Ring','ring2'},
+	['Reraise Ring'] = {'Reraise Earring','ear2'},
+	['Reraise Earring'] = {'Reraise Hairpin','head'},
+	['Reraise Hairpin'] = {'Wh. Rarab Cap +1','head'},
 }
