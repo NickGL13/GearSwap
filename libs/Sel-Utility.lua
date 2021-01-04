@@ -2220,6 +2220,11 @@ function check_rune()
 			windower.chat.input('/ja "'..state.RuneElement.value..'" <me>')
 			tickdelay = os.clock() + 1.8
 			return true
+
+		elseif player.main_job == 'RUN' and abil_recasts[242] < latency and (player.hpp < 50 or (state.RuneElement.Value == 'Tenebrae' and player.mpp < 75)) then
+			windower.chat.input('/ja "Vivacious Pulse" <me>')
+			tickdelay = os.clock() + 1.8
+			return true
 			
 		elseif not player.in_combat then
 			return false
@@ -2393,13 +2398,13 @@ windower.raw_register_event('outgoing chunk',function(id,data,modified,is_inject
         lastlocation = modified:sub(5, 16)
 		
 		if wasmoving ~= moving then
-			if not (player.status == 'Event' or check_midaction() or pet_midaction()) then
+			if not (player.status == 'Event' or (os.clock() < (next_cast + 1)) or pet_midaction() or (os.clock() < (petWillAct + 2))) then
 				send_command('gs c forceequip')
 			end
 		end
 
 		if moving then
-			if player.movement_speed <= 5 and sets.Kiting and not (player.status == 'Event' or check_midaction() or pet_midaction()) then
+			if player.movement_speed <= 5 and sets.Kiting and not (player.status == 'Event' or (os.clock() < (next_cast + 1)) or pet_midaction() or (os.clock() < (petWillAct + 2))) then
 				send_command('gs c forceequip')
 			end
 			if state.RngHelper.value then
@@ -2466,8 +2471,8 @@ function standardize_set(set)
 
 	standardized_set.ear1 = standardized_set.ear1 or standardized_set.left_ear or standardized_set.lear or nil
 	standardized_set.ear2 = standardized_set.ear2 or standardized_set.right_ear or standardized_set.rear or nil
-	standardized_set.ring1 = standardized_set.ring1 or standardized_set.left_ring or standardized_set.rring or nil
-	standardized_set.ring2 = standardized_set.ring2 or standardized_set.right_ring or standardized_set.lring or nil
+	standardized_set.ring1 = standardized_set.ring1 or standardized_set.left_ring or standardized_set.lring or nil
+	standardized_set.ring2 = standardized_set.ring2 or standardized_set.right_ring or standardized_set.rring or nil
 	standardized_set.range = standardized_set.range or standardized_set.ranged or nil
 	
 	return standardized_set
