@@ -471,78 +471,74 @@ end
 -- Elemental gear utility functions.
 -------------------------------------------------------------------------------------------------------------------
 
--- General handler function to set all the elemental gear for an action.
-function set_elemental_gear(spell, spellMap)
-	--No longer needed because of Fotia.
-    --set_elemental_gorget_belt(spell)
-    set_elemental_obi_cape_ring(spell, spellMap)
-    --set_elemental_staff(spell, spellMap)
-end
-
-
---[[ Set the name field of the predefined gear vars for gorgets and belts, for the specified weaponskill. No longer needed because of Fotia.
-function set_elemental_gorget_belt(spell)
-    if spell.type ~= 'WeaponSkill' then
-        return
-    end
-
-    -- Get the union of all the skillchain elements for the weaponskill
-    local weaponskill_elements = S{}:
-        union(skillchain_elements[spell.skillchain_a]):
-        union(skillchain_elements[spell.skillchain_b]):
-        union(skillchain_elements[spell.skillchain_c])
-    
-    gear.ElementalGorget.name = get_elemental_item_name("gorget", weaponskill_elements) or gear.default.weaponskill_neck  or ""
-    gear.ElementalBelt.name   = get_elemental_item_name("belt", weaponskill_elements)   or gear.default.weaponskill_waist or ""
-end
-]]--
-
 -- Function to get an appropriate obi/cape/ring for the current action.
 function set_elemental_obi_cape_ring(spell, spellMap)
     if spell.element == 'None' then
         return
     end
 
-	if spell.element == world.weather_element or spell.element == world.day_element then
+	--[[
+	if spell.element == world.weather_element or spell.element == world.day_element and item_available("Twilight Cape") then
 		gear.ElementalCape.name = "Twilight Cape"
-		gear.ElementalObi.name = "Hachirin-no-Obi"
 	else
-		gear.ElementalObi.name = gear.default.obi_waist
 		gear.ElementalCape.name = gear.default.obi_back
 	end
-
-	if is_nuke(spell, spellMap) then
-		local orpheus_avail = item_available("Orpheus's Sash")
-		if spell.english:endswith('helix') then
-			if orpheus_avail and spell.target.distance < 13 then
-				gear.ElementalObi.name = "Orpheus's Sash"
+	]]
+	if spell.english:endswith('helix') or spell.english:endswith('helix II') then
+		if item_available("Orpheus's Sash") then
+			local distance = spell.target.distance - spell.target.model_size
+			local orpheus_intensity = (16 - (distance <= 1 and 1 or distance >= 15 and 15 or distance))
+				if orpheus_intensity > 5 then
+					equip({waist="Orpheus's Sash"})
+				end
 			end
-		else
-			local hachirin_avail = item_available('Hachirin-no-Obi')
-			if hachirin_avail and spell.element == world.weather_element and world.weather_intensity == 2 then
-				gear.ElementalObi.name = "Hachirin-no-Obi"
-			elseif orpheus_avail and spell.target.distance < 3 then
-				gear.ElementalObi.name = "Orpheus's Sash"
-			elseif hachirin_avail and spell.element == world.weather_element and spell.element == world.day_element then
-				gear.ElementalObi.name = "Hachirin-no-Obi"
-			elseif orpheus_avail and spell.target.distance < 8 then
-				gear.ElementalObi.name = "Orpheus's Sash"
-			elseif hachirin_avail and (spell.element == world.weather_element or spell.element == world.day_element) then
-				gear.ElementalObi.name = "Hachirin-no-Obi"
-			elseif orpheus_avail and spell.target.distance < 13 then
-				gear.ElementalObi.name = "Orpheus's Sash"
-			else
-				gear.ElementalObi.name = gear.default.obi_waist
+	elseif is_nuke(spell, spellMap) then
+		local distance = spell.target.distance - spell.target.model_size
+		local single_obi_intensity = 0
+		local orpheus_intensity = 0
+		local hachirin_intensity = 0
+
+		if item_available("Orpheus's Sash") then
+			orpheus_intensity = (16 - (distance <= 1 and 1 or distance >= 15 and 15 or distance))
+		end
+		
+		if item_available(data.elements.obi_of[spell.element]) then
+			if spell.element == world.weather_element then
+				single_obi_intensity = single_obi_intensity + data.weather_bonus_potency[world.weather_intensity]
+			end
+			if spell.element == world.day_element then
+				single_obi_intensity = single_obi_intensity + 10
 			end
 		end
-	end
-	
-	if spell.element == world.day_element and spell.english ~= 'Impact' and not S{'Divine Magic','Dark Magic','Healing Magic'}:contains(spell.skill) then
-        gear.ElementalRing.name = "Zodiac Ring"
-	else
-		gear.ElementalRing.name = gear.default.obi_ring
-	end
 
+		if item_available('Hachirin-no-Obi') then
+			if spell.element == world.weather_element then
+				hachirin_intensity = hachirin_intensity + data.weather_bonus_potency[world.weather_intensity]
+			elseif spell.element == data.elements.weak_to[world.weather_element] then
+				hachirin_intensity = hachirin_intensity - data.weather_bonus_potency[world.weather_intensity]
+			end
+			if spell.element == world.day_element then
+				hachirin_intensity = hachirin_intensity + 10
+			elseif spell.element == data.elements.weak_to[world.day_element] then
+				hachirin_intensity = hachirin_intensity - 10
+			end
+		end
+
+		if hachirin_intensity >= single_obi_intensity and hachirin_intensity >= orpheus_intensity and hachirin_intensity >= 5 then
+			equip({waist="Hachirin-no-Obi"})
+		elseif single_obi_intensity >= orpheus_intensity and single_obi_intensity >= 5 then
+			equip({waist=data.elements.obi_of[spell.element]})
+		elseif orpheus_intensity >= 5 then
+			equip({waist="Orpheus's Sash"})
+		end
+	
+		if spell.element == world.day_element and spell.english ~= 'Impact' and not spell.skill == 'Divine Magic' and item_available("Zodiac Ring") then
+			gear.ElementalRing.name = "Zodiac Ring"
+		else
+			gear.ElementalRing.name = gear.default.obi_ring
+		end
+		
+	end
 end
 
 
@@ -739,7 +735,7 @@ function can_use(spell)
 			if (spell_jobs[player.sub_job_id] and spell_jobs[player.sub_job_id] <= player.sub_job_level) or state.Buff['Enlightenment'] then
 				return true
 			elseif data.spells.addendum_white:contains(spell.english) and not state.Buff['Addendum: White'] then
-				if state.AutoArts.value and not state.Buff['Addendum: White'] and not silent_check_amnesia() and get_current_strategem_count() > 0 then
+				if state.AutoArts.value and not state.Buff['Addendum: White'] and not silent_check_amnesia() and get_current_stratagem_count() > 0 then
 					if state.Buff['Light Arts'] then
 						windower.chat.input('/ja "Addendum: White" <me>')
 						windower.chat.input:schedule(1.5,'/ma "'..spell.english..'" '..spell.target.raw..'')
@@ -760,7 +756,7 @@ function can_use(spell)
 				end
 				return false
             elseif data.spells.addendum_black:contains(spell.english) and not state.Buff['Addendum: Black'] then
-				if state.AutoArts.value and not state.Buff['Addendum: Black'] and not silent_check_amnesia() and get_current_strategem_count() > 0 then
+				if state.AutoArts.value and not state.Buff['Addendum: Black'] and not silent_check_amnesia() and get_current_stratagem_count() > 0 then
 					if state.Buff['Dark Arts'] then
 						windower.chat.input('/ja "Addendum: Black" <me>')
 						windower.chat.input:schedule(1.5,'/ma "'..spell.english..'" '..spell.target.raw..'')
@@ -787,7 +783,7 @@ function can_use(spell)
             (spell_jobs[player.main_job_id] >= 100 and number_of_jps(player.job_points[__raw.lower(res.jobs[player.main_job_id].ens)]) >= spell_jobs[player.main_job_id]) ) ) then
                         
             if data.spells.addendum_white:contains(spell.english) then
-				if state.AutoArts.value and not buffactive["Addendum: White"] and not silent_check_amnesia() and get_current_strategem_count() > 0 then
+				if state.AutoArts.value and not buffactive["Addendum: White"] and not silent_check_amnesia() and get_current_stratagem_count() > 0 then
 					if state.Buff['Light Arts'] then
 						windower.chat.input('/ja "Addendum: White" <me>')
 						windower.chat.input:schedule(1.5,'/ma "'..spell.english..'" '..spell.target.raw..'')
@@ -804,7 +800,7 @@ function can_use(spell)
 				end
             end
             if data.spells.addendum_black:contains(spell.english) then
-				if state.AutoArts.value and not buffactive["Addendum: Black"] and not silent_check_amnesia() and get_current_strategem_count() > 0 then
+				if state.AutoArts.value and not buffactive["Addendum: Black"] and not silent_check_amnesia() and get_current_stratagem_count() > 0 then
 					if buffactive["Dark Arts"] then
 						windower.chat.input('/ja "Addendum: Black" <me>')
 						windower.chat.input:schedule(1.5,'/ma "'..spell.english..'" '..spell.target.raw..'')
@@ -911,36 +907,9 @@ end
 -- windower.register_event('time change', time_change)
 --
 -- Variables it sets: classes.Daytime, and classes.DuskToDawn.  They are set to true
--- if their respective descriptors are true, or false otherwise.
-function time_change(new_time, old_time)
-    local was_daytime = classes.Daytime
-    local was_dusktime = classes.DuskToDawn
-    
-    if new_time and (new_time >= 6*60 and new_time < 18*60) then
-        classes.Daytime = true
-    else
-        classes.Daytime = false
-    end
-
-    if new_time and (new_time >= 17*60 or new_time < 7*60) then
-        classes.DuskToDawn = true
-    else
-        classes.DuskToDawn = false
-    end
-    
-    if was_daytime ~= classes.Daytime or was_dusktime ~= classes.DuskToDawn then
-        if job_time_change then
-            job_time_change(new_time, old_time)
-        end
-
-        handle_update({'auto'})
-    end
-end
-
---Selindrile's Functions
 
 function item_available(item)
-	if player.inventory[item] or player.wardrobe[item] or player.wardrobe2[item] or player.wardrobe3[item] or player.wardrobe4[item] then
+	if player.inventory[item] or player.wardrobe[item] or player.wardrobe2[item] or player.wardrobe3[item] or player.wardrobe4[item] or player.wardrobe5[item] or player.wardrobe6[item] or player.wardrobe7[item] or player.wardrobe8[item] or player.satchel[item] then
 		return true
 	else
 		return false
@@ -948,7 +917,7 @@ function item_available(item)
 end
 
 function item_owned(item)
-	if player.inventory[item] or player.wardrobe[item] or player.wardrobe2[item] or player.wardrobe3[item] or player.wardrobe4[item] or player.safe[item] or player.safe2[item] or player.storage[item] or player.locker[item] or player.satchel[item] or player.sack[item] or player.case[item] then
+	if player.inventory[item] or player.wardrobe[item] or player.wardrobe2[item] or player.wardrobe3[item] or player.wardrobe4[item] or player.wardrobe5[item] or player.wardrobe6[item] or player.wardrobe7[item] or player.wardrobe8[item] or player.safe[item] or player.safe2[item] or player.storage[item] or player.locker[item] or player.satchel[item] or player.sack[item] or player.case[item] then
 		return true
 	else
 		return false
@@ -1038,7 +1007,7 @@ function check_midaction(spell, spellMap, eventArgs)
 	if os.clock() < next_cast and not state.RngHelper.value then
 		if eventArgs and not (spell.type:startswith('BloodPact') and state.Buff["Astral Conduit"]) then
 			eventArgs.cancel = true
-			if delayed_cast == '' then
+			if delayed_cast == '' and state.MiniQueue.value then
 				windower.send_command:schedule((next_cast - os.clock()),'gs c delayedcast')
 			end
 			delayed_cast = spell.english
@@ -1223,7 +1192,7 @@ function check_spell_targets(spell, spellMap, eventArgs)
 			add_to_chat(123,'Target out of range, too far to heal!')
 		elseif spell.english:startswith('Curaga') and not spell.target.in_party then
 			if (state.Buff['Light Arts'] or state.Buff['Addendum: White']) then
-				if get_current_strategem_count() > 0 then
+				if get_current_stratagem_count() > 0 then
 					local number = spell.english:match('Curaga ?%a*'):sub(7) or ''
 					eventArgs.cancel = true
 					if buffactive['Accession'] then
@@ -1532,12 +1501,12 @@ function check_use_item()
 			windower.chat.input('/item "'..useItemName..'" <me>')
 			tickdelay = os.clock() + 3
 			return true
-		elseif item_available(useItemName) and ((get_usable_item(useItemName).next_use_time) + Offset) < 10 then
-			windower.send_command('gs c forceequip '..useItemSlot..' '..useItemName..'')
-			tickdelay = os.clock() + 2
-			return true
 		elseif player.satchel[useItemName] then
 			windower.send_command('get "'..useItemName..'" satchel')
+			tickdelay = os.clock() + 2
+			return true
+		elseif item_available(useItemName) and ((get_usable_item(useItemName).next_use_time) + Offset) < 10 then
+			windower.send_command('gs c forceequip '..useItemSlot..' '..useItemName..'')
 			tickdelay = os.clock() + 2
 			return true
 		elseif item_stepdown[useItemName] then
@@ -1626,7 +1595,7 @@ function check_doomed()
 end
 
 function check_ws()
-	if state.AutoWSMode.value and not state.RngHelper.value and player.status == 'Engaged' and player.target.type == "MONSTER" and player.tp > 999 and not silent_check_amnesia() and player.target and not (player.target.distance > (19.7 + player.target.model_size)) then
+	if state.AutoWSMode.value and not state.RngHelper.value and player.status == 'Engaged' and player.target and player.target.type == "MONSTER" and player.tp > 999 and not silent_check_amnesia() and not (player.target.distance > (19.7 + player.target.model_size)) then
 
 	local available_ws = S(windower.ffxi.get_abilities().weapon_skills)
 		
@@ -1697,7 +1666,7 @@ function is_party_member(playerid)
 end
 
 function get_usable_item(name)--returns time that you can use the item again
-    for _,n in pairs({"inventory","wardrobe","wardrobe2","wardrobe3","wardrobe4"}) do
+	for _,n in pairs({"inventory","wardrobe","wardrobe2","wardrobe3","wardrobe4","wardrobe5","wardrobe6","wardrobe7","wardrobe8","satchel"}) do
         for _,v in pairs(gearswap.items[n]) do
             if type(v) == "table" and v.id ~= 0 and res.items[v.id].english:lower() == name:lower() then
                 return extdata.decode(v)
@@ -2024,11 +1993,11 @@ end
 
 function is_nuke(spell, spellMap)
 	if (
-		(spell.skill == 'Elemental Magic' and spellMap ~= 'ElementalEnfeeble') or
+		(spell.skill == 'Elemental Magic' and spellMap ~= 'ElementalEnfeeble' and spell.english ~= 'Impact') or
 	    (player.main_job == 'BLU' and spell.skill == 'Blue Magic' and spellMap and spellMap:contains('Magical')) or
 		(player.main_job == 'NIN' and spell.skill == 'Ninjutsu' and spellMap and spellMap:contains('ElementalNinjutsu')) or
-		spell.english == 'Comet' or spell.english == 'Meteor' or spell.english == 'Impact' or spell.english == 'Death' or
-		spell.english:startswith('Banish')
+		spell.english == 'Comet' or spell.english == 'Meteor' or spell.english == 'Death' or spell.english:startswith('Banish')
+		or spell.english:startswith('Drain') or spell.english:startswith('Aspir')
 		) then
 		
 		return true
@@ -2044,8 +2013,12 @@ function ammo_left()
 	local Wardrobe2Ammo = ((player.wardrobe2[player.equipment.ammo] or {}).count or 0)
 	local Wardrobe3Ammo = ((player.wardrobe3[player.equipment.ammo] or {}).count or 0)
 	local Wardrobe4Ammo = ((player.wardrobe4[player.equipment.ammo] or {}).count or 0)
+	local Wardrobe5Ammo = ((player.wardrobe5[player.equipment.ammo] or {}).count or 0)
+	local Wardrobe6Ammo = ((player.wardrobe6[player.equipment.ammo] or {}).count or 0)
+	local Wardrobe7Ammo = ((player.wardrobe7[player.equipment.ammo] or {}).count or 0)
+	local Wardrobe8Ammo = ((player.wardrobe8[player.equipment.ammo] or {}).count or 0)
 		
-	local AmmoLeft = InventoryAmmo + WardrobeAmmo + Wardrobe2Ammo + Wardrobe3Ammo + Wardrobe4Ammo 
+	local AmmoLeft = InventoryAmmo + WardrobeAmmo + Wardrobe2Ammo + Wardrobe3Ammo + Wardrobe4Ammo + Wardrobe5Ammo + Wardrobe6Ammo + Wardrobe7Ammo + Wardrobe8Ammo    
 		
 	return AmmoLeft	
 end
@@ -2151,29 +2124,42 @@ function face_target()
 end
 
 function check_ammo()
-
 	if state.AutoAmmoMode.value and player.equipment.range and not player.in_combat and not world.in_mog_house and not useItem then
-		local ammo_to_stock
-		if type(ammostock) == 'table' and ammostock[data.equipment.rema_ranged_weapons_ammo[player.equipment.range]] then
-			ammo_to_stock = ammostock[data.equipment.rema_ranged_weapons_ammo[player.equipment.range]]
+		if type(ammostock) == 'table' then
+			for ammo, ammo_count in pairs(ammostock) do
+				if count_total_ammo(ammo) < ammo_count then
+					if item_available(data.equipment.rema_ammo_pouch_of[ammo]) then
+						if ((get_usable_item(data.equipment.rema_ammo_pouch_of[ammo]).next_use_time) + 18000 - os.time()) < 10 then
+							add_to_chat(217, "You're low on " .. ammo .. ", using " .. data.equipment.rema_ammo_pouch_of[ammo] .. ".")
+							useItem = true
+							useItemName = data.equipment.rema_ammo_pouch_of[ammo]
+							useItemSlot = 'waist'
+							return true
+						end
+					elseif data.equipment.rema_ammo_weapon_of[ammo] == player.equipment.range and get_usable_item(player.equipment.range).usable then
+						windower.chat.input("/item '".. player.equipment.range .."' <me>")
+						add_to_chat(217,"You're low on ".. ammo ..", using ".. player.equipment.range ..".")
+						tickdelay = os.clock() + 5
+						return true
+					end
+				end
+			end
 		else
-			ammo_to_stock = ammostock
-		end
-	
-		if data.equipment.rema_ranged_weapons:contains(player.equipment.range) and count_total_ammo(data.equipment.rema_ranged_weapons_ammo[player.equipment.range]) < ammo_to_stock then
-			if get_usable_item(player.equipment.range).usable then
-				windower.chat.input("/item '"..player.equipment.range.."' <me>")
-				add_to_chat(217,"You're low on "..data.equipment.rema_ranged_weapons_ammo[player.equipment.range]..", using "..player.equipment.range..".")
-				tickdelay = os.clock() + 2
-				return true
-			elseif item_available(data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]) then
-				if ((get_usable_item(data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]).next_use_time) + 18000 -os.time()) < 10 then
-					add_to_chat(217,"You're low on "..data.equipment.rema_ranged_weapons_ammo[player.equipment.range]..", using "..data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]..".")
-					useItem = true
-					useItemName = data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]
-					useItemSlot = 'waist'
+			if data.equipment.rema_ranged_weapons:contains(player.equipment.range) and count_total_ammo(data.equipment.rema_ranged_weapons_ammo[player.equipment.range]) < ammostock then
+				if get_usable_item(player.equipment.range).usable then
+					windower.chat.input("/item '"..player.equipment.range.."' <me>")
+					add_to_chat(217,"You're low on "..data.equipment.rema_ranged_weapons_ammo[player.equipment.range]..", using "..player.equipment.range..".")
+					tickdelay = os.clock() + 5
 					return true
-				end				
+				elseif item_available(data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]) then
+					if ((get_usable_item(data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]).next_use_time) + 18000 -os.time()) < 10 then
+						add_to_chat(217,"You're low on "..data.equipment.rema_ranged_weapons_ammo[player.equipment.range]..", using "..data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]..".")
+						useItem = true
+						useItemName = data.equipment.rema_ranged_weapons_ammo_pouch[player.equipment.range]
+						useItemSlot = 'waist'
+						return true
+					end
+				end
 			end
 		end
 	end
@@ -2183,7 +2169,7 @@ end
 function count_available_ammo(ammo_name)
 	local ammo_count = 0
 	
-    for _,n in pairs({"inventory","wardrobe","wardrobe2","wardrobe3","wardrobe4",}) do
+    for _,n in pairs({"inventory","wardrobe","wardrobe2","wardrobe3","wardrobe4","wardrobe5","wardrobe6","wardrobe7","wardrobe8","satchel"}) do
 		if player[n][ammo_name] then
 			ammo_count = ammo_count + player[n][ammo_name].count
 		end
@@ -2195,7 +2181,7 @@ end
 function count_total_ammo(ammo_name)
 	local ammo_count = 0
 	
-    for _,n in pairs({"inventory","wardrobe","wardrobe2","wardrobe3","wardrobe4","satchel","sack","case"}) do
+    for _,n in pairs({"inventory","wardrobe","wardrobe2","wardrobe3","wardrobe4","wardrobe5","wardrobe6","wardrobe7","wardrobe8","satchel"}) do
 		if player[n][ammo_name] then
 			ammo_count = ammo_count + player[n][ammo_name].count
 		end
@@ -2266,10 +2252,10 @@ function check_ws_acc()
 end
 
 function is_dual_wielding()
-	if ((player.equipment.main and not (player.equipment.sub == 'empty' or player.equipment.sub:contains('Grip') or player.equipment.sub:contains('Strap') or res.items[item_name_to_id(player.equipment.sub)].shield_size))) then
-		return true
-	else
-		return false
+	if player.equipment.main and player.equipment.sub and player.equipment.sub ~= 'empty' then
+		if data.skills.one_handed_combat:contains(res.items[item_name_to_id(player.equipment.sub)].skill) then
+			return true
+		end
 	end
 end
 
@@ -2308,7 +2294,11 @@ function update_combat_form()
 end
 
 function item_name_to_id(name)
-    return (player.inventory[name] or player.wardrobe[name] or player.wardrobe2[name] or player.wardrobe3[name] or player.wardrobe4[name] or {id=nil}).id
+	if name == nil or name == 'empty' then
+		return 22299
+	else
+		return (player.inventory[name] or player.wardrobe[name] or player.wardrobe2[name] or player.wardrobe3[name] or player.wardrobe4[name] or player.wardrobe5[name] or player.wardrobe6[name] or player.wardrobe7[name] or player.wardrobe8[name] or {id=nil}).id
+	end
 end
 
 function get_item_table(item)
@@ -2335,20 +2325,21 @@ function set_to_item(set)
 end
 
 function item_equipped(item)
+	item = item:lower()
 	for k, v in pairs(player.equipment) do
-		if v == item then
+		if v:lower() == item then
 			return true
 		end
 	end
 	return false
 end
 
-function get_current_strategem_count()
+function get_current_stratagem_count()
     -- returns recast in seconds.
     local allRecasts = windower.ffxi.get_ability_recasts()
     local stratsRecast = allRecasts[231]
 	local StratagemChargeTimer = 240
-	local maxStrategems = 1
+	local maxStratagems = 1
 	
 	if player.sub_job == 'SCH' and player.sub_job_level > 29 then
 		StratagemChargeTimer = 120
@@ -2368,14 +2359,14 @@ function get_current_strategem_count()
 	
 	if player.sub_job == 'SCH' then
 		if player.sub_job_level > 29 then
-			maxStrategems = 2
+			maxStratagems = 2
 		end
 	else
-		maxStrategems = math.floor((player.main_job_level + 10) / 20)
+		maxStratagems = math.floor((player.main_job_level + 10) / 20)
 	end
 
 
-    local currentCharges = math.floor(maxStrategems - (stratsRecast / StratagemChargeTimer))
+    local currentCharges = math.floor(maxStratagems - (stratsRecast / StratagemChargeTimer))
     return currentCharges
 end
 
@@ -2388,26 +2379,21 @@ function arts_active()
 end
 
 -- Movement Handling
-lastlocation = 'fff':pack(0,0,0)
+lastlocation = {X=0,Y=0}
 moving = false
 wasmoving = false
 
 windower.raw_register_event('outgoing chunk',function(id,data,modified,is_injected,is_blocked)
     if id == 0x015 then
-        moving = lastlocation ~= modified:sub(5, 16)
-        lastlocation = modified:sub(5, 16)
-		
-		if wasmoving ~= moving then
-			if not (player.status == 'Event' or (os.clock() < (next_cast + 1)) or pet_midaction() or (os.clock() < (petWillAct + 2))) then
-				send_command('gs c forceequip')
-			end
-		end
+		local currentlocation = {X=modified:sub(5,8), Y=modified:sub(13,16)}
+        moving = currentlocation.X ~= lastlocation.X or currentlocation.Y ~= lastlocation.Y
+        lastlocation = currentlocation
 
 		if moving then
-			if player.movement_speed <= 5 and sets.Kiting and not (player.status == 'Event' or (os.clock() < (next_cast + 1)) or pet_midaction() or (os.clock() < (petWillAct + 2))) then
+			if sets.Kiting and not (player.status == 'Event' or (os.clock() < (next_cast + 1)) or pet_midaction() or (os.clock() < (petWillAct + 2))) then
 				send_command('gs c forceequip')
 			end
-			if state.RngHelper.value then
+			if state.RngHelper.value and not buffactive['Hover Shot'] then
 				send_command('gs rh clear')
 			end
 			if buffup~= '' then
@@ -2416,9 +2402,14 @@ windower.raw_register_event('outgoing chunk',function(id,data,modified,is_inject
 			end
 			
 			if not state.Uninterruptible.value then delayed_cast = '' end
+		elseif wasmoving then
+			if not (player.status == 'Event' or (os.clock() < (next_cast + 1)) or pet_midaction() or (os.clock() < (petWillAct + 2))) then
+				send_command('gs c forceequip')
+			end
 		end
 		
 		wasmoving = moving
+
     end
 end)
 		
@@ -2446,11 +2437,15 @@ function get_effective_player_tp(spell, WSset)
 	if data.equipment.magian_tp_bonus_ranged_weapons:contains(player.equipment.range) then effective_tp = effective_tp + 1000 end
 	if state.Buff['Warcry'] and player.main_job == "WAR" and lastwarcry == player.name then effective_tp = effective_tp + warcry_tp_bonus end
 	if WSset.ear1 == "Moonshade Earring" or WSset.ear2 == "Moonshade Earring" then effective_tp = effective_tp + 250 end
+	if WSset.head == "Mpaca's Cap" then effective_tp = effective_tp + 200 end
+	if WSset.body == "Ikenga's Vest" then effective_tp = effective_tp + 170 end
 	
 	if spell.skill == 25 or spell.skill == 26 then
 		if data.equipment.aeonic_weapons:contains(player.equipment.range) then effective_tp = effective_tp + 500 end
 	else
-		if data.equipment.aeonic_weapons:contains(player.equipment.main) then effective_tp = effective_tp + 500 end
+		if data.equipment.aeonic_weapons:contains(player.equipment.main) then effective_tp = effective_tp + 500
+		elseif player.equipment.main == 'Kunimune +1' then effective_tp = effective_tp + 500
+		end
 	end
 
 	return effective_tp
@@ -2469,11 +2464,11 @@ function standardize_set(set)
 		end
     end
 
-	standardized_set.ear1 = standardized_set.ear1 or standardized_set.left_ear or standardized_set.lear or nil
-	standardized_set.ear2 = standardized_set.ear2 or standardized_set.right_ear or standardized_set.rear or nil
-	standardized_set.ring1 = standardized_set.ring1 or standardized_set.left_ring or standardized_set.lring or nil
-	standardized_set.ring2 = standardized_set.ring2 or standardized_set.right_ring or standardized_set.rring or nil
-	standardized_set.range = standardized_set.range or standardized_set.ranged or nil
+	standardized_set.ear1 = standardized_set.ear1 or standardized_set.left_ear or standardized_set.lear or ''
+	standardized_set.ear2 = standardized_set.ear2 or standardized_set.right_ear or standardized_set.rear or ''
+	standardized_set.ring1 = standardized_set.ring1 or standardized_set.left_ring or standardized_set.lring or ''
+	standardized_set.ring2 = standardized_set.ring2 or standardized_set.right_ring or standardized_set.rring or ''
+	standardized_set.range = standardized_set.range or standardized_set.ranged or ''
 	
 	return standardized_set
 end
